@@ -1,0 +1,60 @@
+{
+  "http_status": 200,
+  "body": {
+    "ok": true,
+    "brief_id": "BR-20261110-A6EBP",
+    "status": "ready_for_call",
+    "lead_score": 100,
+    "priority": "high",
+    "missing": [],
+    "spec": {
+      "product": "linen shirts and dresses",
+      "industry": "women's apparel",
+      "goal": "sales",
+      "audience": "women 25-40",
+      "platforms": [
+        "Meta",
+        "TikTok"
+      ],
+      "formats": [
+        "ugc_video",
+        "static_ad"
+      ],
+      "deliverable_count": 6,
+      "budget_usd": 6000,
+      "deadline": "March 1",
+      "tone": "warm natural",
+      "summary": "sustainable fabrics, women 25-40, US, Meta, TikTok, 6 UGC videos, 6 static ads, $6,000 budget"
+    },
+    "concepts": [
+      {
+        "format": "ugc_video",
+        "tool": "Kling",
+        "hook": "Experience the comfort of our sustainable linen fabric in every stitch.",
+        "prompt": "A soft linen fabric draped over a woman's body in natural daylight, captured in a warm natural lighting style. Handheld smartphone look, natural light, warm natural mood, 5 seconds, 4:5."
+      },
+      {
+        "format": "static_ad",
+        "tool": "Midjourney",
+        "hook": "Trendy and stylish linen dresses for women 25-40, delivered through Meta and TikTok.",
+        "prompt": "A vibrant linen dress with soft colors and natural light, shot in a warm natural setting, warm natural styling, soft natural light, ad-ready composition --ar 4:5 --style raw"
+      },
+      {
+        "format": "ugc_video",
+        "tool": "Kling",
+        "hook": "Boost your sales with our linen shirts and dresses, designed for the perfect fit.",
+        "prompt": "A linen shirt and dress in a modern setting with natural lighting and warm tones. Handheld smartphone look, natural light, warm natural mood, 5 seconds, 4:5."
+      }
+    ],
+    "reply": {
+      "to": "priya@linenloom.example",
+      "subject": "Linen Loom brief: next step",
+      "body": "Hi Priya,\n\nExperience the comfort of our sustainable linen fabric in every stitch. Thanks for the Linen Loom brief.\n\nHere is what we have:\n- Goal: sales\n- Audience: women 25-40\n- Formats: UGC-style video and static ad\n- Platforms: Meta, TikTok\n- Volume: 6 per format\n- Live by: March 1\n\nFirst concept direction: \"Experience the comfort of our sustainable linen fabric in every stitch.\"\n\nDoes a 30-minute brief call this week work? Pick any slot and we will bring a creative spec and first variations.\n\nThe Kreative Media team"
+    },
+    "usage": {
+      "model": "qwen3:0.6b",
+      "tokens": 766,
+      "seconds": 7.1
+    }
+  }
+}

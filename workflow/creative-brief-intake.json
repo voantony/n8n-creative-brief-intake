@@ -1,0 +1,586 @@
+{
+  "name": "Creative brief intake (AI)",
+  "nodes": [
+    {
+      "id": "bb45831b-6dc5-43ef-9184-288109005a44",
+      "name": "Brief webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "creative-brief",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "a68dee53-a589-498c-9aa8-22525efea172"
+    },
+    {
+      "id": "8dcb61c8-7cdb-4e06-89ef-0d3e4c8e2872",
+      "name": "Normalize & validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// One place to change endpoints and the model.\nconst CONFIG = {\n  llm_url: 'http://127.0.0.1:11434/api/chat',      // Ollama native chat API (local, no key)\n  model: 'qwen3:0.6b',\n  sheets_url: 'http://127.0.0.1:8099/sheets/append', // mock Google Sheets\n  slack_url: 'http://127.0.0.1:8099/slack/webhook',  // mock Slack incoming webhook\n  high_priority_score: 70,\n  parse_schema: {\"type\": \"object\", \"properties\": {\"product\": {\"type\": \"string\"}, \"industry\": {\"type\": \"string\"}, \"goal\": {\"type\": \"string\", \"enum\": [\"sales\", \"leads\", \"app_installs\", \"awareness\", \"engagement\", \"unclear\"]}, \"audience\": {\"type\": \"string\"}, \"platforms\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"formats\": {\"type\": \"array\", \"items\": {\"type\": \"string\", \"enum\": [\"ugc_video\", \"ai_avatar_video\", \"static_ad\", \"carousel\", \"product_photo\"]}}, \"deliverable_count\": {\"type\": [\"integer\", \"null\"]}, \"budget_usd\": {\"type\": [\"number\", \"null\"]}, \"deadline\": {\"type\": [\"string\", \"null\"]}, \"tone\": {\"type\": \"string\"}, \"summary\": {\"type\": \"string\"}}, \"required\": [\"product\", \"industry\", \"goal\", \"audience\", \"platforms\", \"formats\", \"deliverable_count\", \"budget_usd\", \"deadline\", \"tone\", \"summary\"]},\n  parse_system: \"You are a creative-ops assistant at an AI ad agency. Extract a structured creative spec from a client brief. Only use facts stated in the brief. If a field is not stated, use null (or an empty list / 'unclear'). Convert budgets to US dollars only if the brief gives dollars; otherwise null. Return JSON only.\",\n  concept_schema: {\"type\": \"object\", \"properties\": {\"concepts\": {\"type\": \"array\", \"minItems\": 3, \"maxItems\": 3, \"items\": {\"type\": \"object\", \"properties\": {\"hook\": {\"type\": \"string\"}, \"visual\": {\"type\": \"string\"}}, \"required\": [\"hook\", \"visual\"]}}, \"opening_line\": {\"type\": \"string\"}}, \"required\": [\"concepts\", \"opening_line\"]},\n  concept_system: \"You are a copywriter at an AI ad agency. Given a creative spec, return three distinct ad concepts. Each has a 'hook' (the first line a viewer reads or hears, under 12 words) and a 'visual' (one sentence describing the scene: subject, setting, lighting, camera). Also return 'opening_line': one friendly sentence to the client that reflects their product and audience. No numbers, prices or dates anywhere. Return JSON only.\",\n};\n\nconst body = $input.first().json.body ?? {};\nconst clean = (v) => (typeof v === 'string' ? v.trim() : v);\nconst lead = {\n  name: clean(body.name) || '',\n  email: (clean(body.email) || '').toLowerCase(),\n  company: clean(body.company) || '',\n  website: clean(body.website) || '',\n  brief: clean(body.brief) || '',\n  source: clean(body.source) || 'website-form',\n};\n\nconst errors = [];\nif (!lead.company) errors.push('company is required');\nif (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(lead.email)) errors.push('a valid email is required');\nif (lead.brief.length < 20) errors.push('brief must be at least 20 characters');\nif (lead.brief.length > 4000) errors.push('brief must be under 4000 characters');\n\nconst brief_id = 'BR-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' +\n  Math.random().toString(36).slice(2, 7).toUpperCase();\n\nreturn [{ json: { ...lead, brief_id, received_at: new Date().toISOString(), valid: errors.length === 0, errors, config: CONFIG } }];"
+      }
+    },
+    {
+      "id": "e8cf803c-3225-4e92-bfd2-0803a4095553",
+      "name": "Valid payload?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "79bec400-938f-4c6f-8ce6-9fae0a9d0ce1",
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "9cd06610-9e8b-482f-af35-4f7cdde03dcd",
+      "name": "Respond 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        520
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "695a626d-797e-4854-9f51-b0b2eb3faa83",
+      "name": "LLM: parse brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.config.llm_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.config.model, stream: false, think: false, options: { temperature: 0, num_predict: 400 }, format: $json.config.parse_schema, messages: [ { role: 'system', content: $json.config.parse_system }, { role: 'user', content: 'Company: ' + $json.company + '\\nWebsite: ' + $json.website + '\\nBrief: ' + $json.brief } ] }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "52cc8f29-7ff7-4fa2-bb31-747bd870bd14",
+      "name": "Validate & score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        260
+      ],
+      "parameters": {
+        "jsCode": "// The model extracts; code decides. Scoring and routing never depend on the model's opinion.\nconst lead = $('Normalize & validate').first().json;\nconst res = $input.first().json;\nlet spec;\ntry {\n  spec = JSON.parse(res.message?.content ?? '');\n} catch (e) {\n  throw new Error(`LLM returned non-JSON for ${lead.brief_id}: ${String(res.message?.content).slice(0, 200)}`);\n}\n\n// Ground every list in the brief text: small models happily invent \"email marketing\" or \"carousels\".\nconst text = lead.brief.toLowerCase();\nconst FORMAT_EVIDENCE = {\n  ugc_video: /ugc|creator|testimonial|unboxing/,\n  ai_avatar_video: /avatar|talking[- ]head|spokesperson|presenter/,\n  static_ad: /static|image ad|banner|still/,\n  carousel: /carousel/,\n  product_photo: /product (photo|shot|image)|catalog|catalogue|packshot/,\n};\nconst PLATFORM_EVIDENCE = { Meta: /meta|facebook|instagram|reels/, TikTok: /tiktok/, YouTube: /youtube|shorts/,\n  Google: /google ads|google display|pmax|performance max/, LinkedIn: /linkedin/, Pinterest: /pinterest/ };\nconst llmFormats = Array.isArray(spec.formats) ? spec.formats : [];\nspec.formats = Object.keys(FORMAT_EVIDENCE).filter((f) => FORMAT_EVIDENCE[f].test(text));\n// \"video\" alone is ambiguous: accept the model's video pick only when the brief says video.\nif (/video/.test(text) && !spec.formats.some((f) => f.endsWith('video'))) {\n  const v = llmFormats.find((f) => f.endsWith('video'));\n  if (v) spec.formats.unshift(v);\n}\nspec.platforms = Object.keys(PLATFORM_EVIDENCE).filter((p) => PLATFORM_EVIDENCE[p].test(text));\nconst num = (v) => (typeof v === 'number' && isFinite(v) && v > 0 ? v : null);\nspec.budget_usd = num(spec.budget_usd);\nspec.deliverable_count = num(spec.deliverable_count);\nif (spec.budget_usd && !/\\$|usd|dollar/.test(text)) spec.budget_usd = null;\nif (spec.deadline && !/\\d|week|month|asap|launch|end of/.test(text)) spec.deadline = null;\nif (spec.deliverable_count && !new RegExp(`\\\\b${spec.deliverable_count}\\\\b`).test(text)) spec.deliverable_count = null;\nif (spec.audience && !/women|men|parents|moms|dads|gen z|millennial|students|\\d{2}\\s*[-\u2013]\\s*\\d{2}|aged|owners|teams|buyers|customers who/.test(text)) spec.audience = 'unclear';\n\nconst missing = [];\nif (!spec.formats.length) missing.push('formats');\nif (!spec.platforms.length) missing.push('platforms');\nif (!spec.audience || spec.audience.toLowerCase() === 'unclear') missing.push('audience');\nif (!spec.budget_usd) missing.push('budget');\nif (!spec.deadline) missing.push('deadline');\nif (!spec.deliverable_count) missing.push('deliverable_count');\n\nconst completeness = Math.round(((6 - missing.length) / 6) * 100);\nlet score = completeness * 0.5;\nif (spec.budget_usd >= 5000) score += 30; else if (spec.budget_usd >= 1500) score += 20; else if (spec.budget_usd) score += 10;\nif (spec.goal === 'sales' || spec.goal === 'leads' || spec.goal === 'app_installs') score += 10;\nif (spec.formats.some((f) => f.includes('video'))) score += 10;\nscore = Math.min(100, Math.round(score));\n\nconst ready = missing.length <= 1 && spec.formats.length > 0;\nreturn [{ json: {\n  ...lead, spec, missing, completeness, lead_score: score, ready,\n  priority: score >= lead.config.high_priority_score ? 'high' : 'standard',\n  usage: { model: res.model, tokens: (res.prompt_eval_count ?? 0) + (res.eval_count ?? 0), seconds: +((res.total_duration ?? 0) / 1e9).toFixed(1) },\n} }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "1d9538e9-4038-451e-862c-7383b5891f07",
+      "name": "Brief complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e08cd724-f730-44da-856f-62c90ce62e65",
+              "leftValue": "={{ $json.ready }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "2197d791-53e9-4ad0-b7fa-b669ba895eab",
+      "name": "LLM: concepts + reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.config.llm_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.config.model, stream: false, think: false, options: { temperature: 0.4, num_predict: 700 }, format: $json.config.concept_schema, messages: [ { role: 'system', content: $json.config.concept_system }, { role: 'user', content: 'Client: ' + $json.name + ' at ' + $json.company + '\\nSpec: ' + JSON.stringify($json.spec) } ] }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "8d3fe22a-8c62-4ea4-b310-56d254bf7308",
+      "name": "Combine draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        140
+      ],
+      "parameters": {
+        "jsCode": "// The model supplies creative ideas; the facts in the email come from the validated spec.\nconst b = $('Validate & score').first().json;\nconst res = $input.first().json;\nlet out;\ntry { out = JSON.parse(res.message?.content ?? ''); }\ncatch (e) { throw new Error(`Concept LLM returned non-JSON for ${b.brief_id}`); }\nconst raw = (out.concepts ?? []).filter((c) => c && c.hook && c.visual).slice(0, 3);\nif (raw.length < 2) throw new Error(`Concept LLM returned ${raw.length} usable concepts for ${b.brief_id}`);\n\nconst LABEL = { ugc_video: 'UGC-style video', ai_avatar_video: 'AI avatar video', static_ad: 'static ad', carousel: 'carousel', product_photo: 'product photo' };\nconst ASPECT = { Meta: '4:5', TikTok: '9:16', YouTube: '9:16', Google: '1:1', LinkedIn: '1:1', Pinterest: '2:3' };\nconst aspect = ASPECT[b.spec.platforms[0]] ?? '4:5';\nconst concepts = raw.map((c, i) => {\n  const format = b.spec.formats[i % b.spec.formats.length];\n  const video = format.endsWith('video');\n  const visual = c.visual.replace(/\\s+/g, ' ').trim().replace(/\\.$/, '');\n  return {\n    format, tool: video ? 'Kling' : 'Midjourney', hook: c.hook.trim(),\n    prompt: video\n      ? `${visual}. Handheld smartphone look, natural light, ${b.spec.tone || 'authentic'} mood, 5 seconds, ${aspect}.`\n      : `${visual}, ${b.spec.tone || 'clean'} styling, soft natural light, ad-ready composition --ar ${aspect} --style raw`,\n  };\n});\n\nconst strip = (s) => (/\\d|\\$/.test(s ?? '') ? '' : (s ?? '').trim());\nconst first = (b.name || '').split(' ')[0] || 'there';\nconst fmt = b.spec.formats.map((f) => LABEL[f]).join(' and ');\nconst lines = [`Hi ${first},`, '',\n  [strip(out.opening_line), `Thanks for the ${b.company} brief.`].filter(Boolean).join(' '), '',\n  'Here is what we have:',\n  `- Goal: ${b.spec.goal}`, `- Audience: ${b.spec.audience}`, `- Formats: ${fmt}`,\n  `- Platforms: ${b.spec.platforms.join(', ')}`,\n  ...(b.spec.deliverable_count ? [`- Volume: ${b.spec.deliverable_count} per format`] : []),\n  ...(b.spec.deadline ? [`- Live by: ${b.spec.deadline}`] : []), '',\n  `First concept direction: \"${concepts[0].hook}\"`, '',\n  'Does a 30-minute brief call this week work? Pick any slot and we will bring a creative spec and first variations.', '',\n  'The Kreative Media team'];\nreturn [{ json: { ...b, status: 'ready_for_call', concepts,\n  reply: { to: b.email, subject: `${b.company} brief: next step`, body: lines.join('\\n') },\n  usage: { model: b.usage.model, tokens: b.usage.tokens + (res.prompt_eval_count ?? 0) + (res.eval_count ?? 0),\n           seconds: +(b.usage.seconds + (res.total_duration ?? 0) / 1e9).toFixed(1) } } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "74488fe3-4a87-488c-ac97-490438d12040",
+      "name": "Clarifying questions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        380
+      ],
+      "parameters": {
+        "jsCode": "// Incomplete briefs get a templated reply: no second LLM call, so no extra cost or risk.\nconst b = $input.first().json;\nconst Q = {\n  formats: 'Which formats do you need: UGC-style video, AI avatar video, static ads, carousels or product photos?',\n  platforms: 'Where will the ads run (Meta, TikTok, YouTube Shorts, Google)?',\n  audience: 'Who is the target customer?',\n  budget: 'What budget range do you have in mind for this round?',\n  deadline: 'When do you need the first creatives live?',\n  deliverable_count: 'Roughly how many final creatives do you want?',\n};\nconst first = (b.name || '').split(' ')[0] || 'there';\nconst body = [`Hi ${first},`, '',\n  `Thanks for sending the brief for ${b.company}. Before we book the brief call, a few quick questions:`, '',\n  ...b.missing.map((m, i) => `${i + 1}. ${Q[m]}`), '',\n  'Reply here and we will send a creative spec the same day.', '', 'The Kreative Media team'].join('\\n');\nreturn [{ json: { ...b, status: 'needs_info', concepts: [],\n  reply: { to: b.email, subject: `A few questions about the ${b.company} brief`, body } } }];"
+      }
+    },
+    {
+      "id": "9feb7778-647b-4190-b403-3e9dcd34ff4b",
+      "name": "Build row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        260
+      ],
+      "parameters": {
+        "jsCode": "const b = $input.first().json;\nreturn [{ json: { ...b, row: {\n  received_at: b.received_at, brief_id: b.brief_id, brand: b.company, contact_email: b.email, status: b.status,\n  completeness: b.completeness, lead_score: b.lead_score, priority: b.priority, formats: b.spec.formats.join(', '),\n  missing_fields: b.missing.join(', '), prompt_count: b.concepts.length, reply_subject: b.reply.subject,\n  model: b.usage.model, tokens_used: b.usage.tokens, llm_seconds: b.usage.seconds,\n} } }];"
+      }
+    },
+    {
+      "id": "107e0122-6734-4556-b5bd-23263fb15efd",
+      "name": "Append row (Sheets)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.config.sheets_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.row) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "f8834f65-aae9-4df8-91c6-b388e7547d05",
+      "name": "High priority?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        160
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d746ba0e-c1a2-4d32-8006-db2b6e8bca0c",
+              "leftValue": "={{ $('Build row').item.json.priority }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "high"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "e40d369a-7162-40fc-a86d-5e2f22d9b6d3",
+      "name": "Slack: hot lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Build row').item.json.config.slack_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: ':fire: ' + $('Build row').item.json.company + ' scored ' + $('Build row').item.json.lead_score + '/100 (' + $('Build row').item.json.spec.formats.join(', ') + '). Draft reply ready: ' + $('Build row').item.json.reply.subject }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "45d08de0-4c66-4480-ac63-51cb4aaab60e",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2200,
+        380
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, brief_id: $('Build row').item.json.brief_id, status: $('Build row').item.json.status, lead_score: $('Build row').item.json.lead_score, priority: $('Build row').item.json.priority, missing: $('Build row').item.json.missing, spec: $('Build row').item.json.spec, concepts: $('Build row').item.json.concepts, reply: $('Build row').item.json.reply, usage: $('Build row').item.json.usage } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "5363faa3-7939-4e7b-9ea6-2f09b16890b9",
+      "name": "Format error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        620
+      ],
+      "parameters": {
+        "jsCode": "// Reached when an LLM call fails after 3 tries, or its output fails validation.\nconst lead = $('Normalize & validate').first().json;\nconst err = $input.first().json.error ?? $input.first().json;\nconst message = typeof err === 'string' ? err : (err.message || JSON.stringify(err)).slice(0, 300);\nreturn [{ json: { brief_id: lead.brief_id, company: lead.company, failed_at: new Date().toISOString(), message,\n  slack: { text: `:rotating_light: Brief ${lead.brief_id} (${lead.company}) failed in n8n: ${message}. Lead is safe in the execution log; reply manually.` },\n  config: lead.config } }];"
+      }
+    },
+    {
+      "id": "aca4e9bb-e7ff-405d-bf0b-2f67888ec2da",
+      "name": "Slack: ops alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        620
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.config.slack_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slack) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "0897324f-99ab-45cc-a5ef-d0cebaf3bb7b",
+      "name": "Respond 502",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1980,
+        620
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, brief_id: $('Format error').item.json.brief_id, error: 'processing failed; the team has been alerted' } }}",
+        "options": {
+          "responseCode": 502
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Brief webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize & validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & validate": {
+      "main": [
+        [
+          {
+            "node": "Valid payload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid payload?": {
+      "main": [
+        [
+          {
+            "node": "LLM: parse brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM: parse brief": {
+      "main": [
+        [
+          {
+            "node": "Validate & score",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & score": {
+      "main": [
+        [
+          {
+            "node": "Brief complete?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brief complete?": {
+      "main": [
+        [
+          {
+            "node": "LLM: concepts + reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Clarifying questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM: concepts + reply": {
+      "main": [
+        [
+          {
+            "node": "Combine draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine draft": {
+      "main": [
+        [
+          {
+            "node": "Build row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clarifying questions": {
+      "main": [
+        [
+          {
+            "node": "Build row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build row": {
+      "main": [
+        [
+          {
+            "node": "Append row (Sheets)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row (Sheets)": {
+      "main": [
+        [
+          {
+            "node": "High priority?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High priority?": {
+      "main": [
+        [
+          {
+            "node": "Slack: hot lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format error": {
+      "main": [
+        [
+          {
+            "node": "Slack: ops alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: ops alert": {
+      "main": [
+        [
+          {
+            "node": "Respond 502",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "pinData": {},
+  "id": "kmBriefIntake01",
+  "tags": []
+}

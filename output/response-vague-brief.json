@@ -1,0 +1,42 @@
+{
+  "http_status": 200,
+  "body": {
+    "ok": true,
+    "brief_id": "BR-20261110-AQSXA",
+    "status": "needs_info",
+    "lead_score": 0,
+    "priority": "standard",
+    "missing": [
+      "formats",
+      "platforms",
+      "audience",
+      "budget",
+      "deadline",
+      "deliverable_count"
+    ],
+    "spec": {
+      "product": "Coffee Subscription",
+      "industry": "Brewing",
+      "goal": "awareness",
+      "audience": "unclear",
+      "platforms": [],
+      "formats": [],
+      "deliverable_count": null,
+      "budget_usd": null,
+      "deadline": null,
+      "tone": "modern",
+      "summary": "We're a coffee subscription service looking to grow through AI-driven ads. Please provide a creative specification."
+    },
+    "concepts": [],
+    "reply": {
+      "to": "marco@brewbox.example",
+      "subject": "A few questions about the BrewBox brief",
+      "body": "Hi Marco,\n\nThanks for sending the brief for BrewBox. Before we book the brief call, a few quick questions:\n\n1. Which formats do you need: UGC-style video, AI avatar video, static ads, carousels or product photos?\n2. Where will the ads run (Meta, TikTok, YouTube Shorts, Google)?\n3. Who is the target customer?\n4. What budget range do you have in mind for this round?\n5. When do you need the first creatives live?\n6. Roughly how many final creatives do you want?\n\nReply here and we will send a creative spec the same day.\n\nThe Kreative Media team"
+    },
+    "usage": {
+      "model": "qwen3:0.6b",
+      "tokens": 265,
+      "seconds": 3.1
+    }
+  }
+}

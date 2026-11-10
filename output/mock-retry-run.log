@@ -1,0 +1,9 @@
+[mock] listening on :8099 FAIL_FIRST=2
+[mock] /sheets/append call 1: returning 503 (FAIL_FIRST)
+[mock] /sheets/append call 2: returning 503 (FAIL_FIRST)
+[mock] sheets row: BR-20261110-A6EBP ready_for_call
+[mock] /slack/webhook call 1: returning 503 (FAIL_FIRST)
+[mock] /slack/webhook call 2: returning 503 (FAIL_FIRST)
+[mock] slack: :fire: Linen Loom scored 100/100 (ugc_video, static_ad). Draft reply ready: Line
+[mock] sheets row: BR-20261110-AQSXA needs_info
+[mock] slack: :rotating_light: Brief BR-20261110-9U8KU (Linen Loom) failed in n8n: 404 - "{\"e

@@ -1,0 +1,3 @@
+received_at,brief_id,brand,contact_email,status,completeness,lead_score,priority,formats,missing_fields,prompt_count,reply_subject,model,tokens_used,llm_seconds
+2026-11-10T14:18:08.044Z,BR-20261110-A6EBP,Linen Loom,priya@linenloom.example,ready_for_call,100,100,high,"ugc_video, static_ad",,3,Linen Loom brief: next step,qwen3:0.6b,766,7.1
+2026-11-10T14:18:23.497Z,BR-20261110-AQSXA,BrewBox,marco@brewbox.example,needs_info,0,0,standard,,"formats, platforms, audience, budget, deadline, deliverable_count",0,A few questions about the BrewBox brief,qwen3:0.6b,265,3.1

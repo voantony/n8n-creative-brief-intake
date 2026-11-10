@@ -1,0 +1,11 @@
+{
+  "http_status": 400,
+  "body": {
+    "ok": false,
+    "errors": [
+      "company is required",
+      "a valid email is required",
+      "brief must be at least 20 characters"
+    ]
+  }
+}

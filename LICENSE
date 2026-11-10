@@ -1,0 +1,32 @@
+MIT License
+
+Copyright (c) 2026 Antony Vo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+The Exa patch README in samples/exa-ai-sdk-patch/ describes a patch against
+@exalabs/ai-sdk, which is MIT-licensed. Copyright for the original package
+belongs to Exa. The README itself is also MIT-licensed; see
+https://gitlab.com/antonyvo/exa-ai-sdk-patch.
+
+The Omni Core documentation in samples/omni-core-docs/ was written against
+the Omni Core source, which is released under the MIT license. These pages
+are not official Omni Layer documentation.

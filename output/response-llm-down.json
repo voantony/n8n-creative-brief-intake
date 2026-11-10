@@ -1,0 +1,8 @@
+{
+  "http_status": 502,
+  "body": {
+    "ok": false,
+    "brief_id": "BR-20261110-9U8KU",
+    "error": "processing failed; the team has been alerted"
+  }
+}
