@@ -230,4 +230,4 @@ docs/                                 screenshots
 scripts.sh                            reload + demo helpers
 ```
 
-MIT licensed. By Antony Vo, [gitlab.com/antonyvo](https://gitlab.com/antonyvo).
+MIT licensed. By Antony Vo, [github.com/voantony](https://github.com/voantony).
