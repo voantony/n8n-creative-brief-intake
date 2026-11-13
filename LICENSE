@@ -19,14 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-The Exa patch README in samples/exa-ai-sdk-patch/ describes a patch against
-@exalabs/ai-sdk, which is MIT-licensed. Copyright for the original package
-belongs to Exa. The README itself is also MIT-licensed; see
-https://gitlab.com/antonyvo/exa-ai-sdk-patch.
-
-The Omni Core documentation in samples/omni-core-docs/ was written against
-the Omni Core source, which is released under the MIT license. These pages
-are not official Omni Layer documentation.
