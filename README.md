@@ -1,5 +1,7 @@
 # Creative brief intake for an AI ad agency (n8n)
 
+[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 An n8n workflow that takes a client brief from a website form, turns it into a structured creative spec with an LLM, scores it, and either drafts the next-step email with three concept prompts or asks the client for what is missing. Every brief is logged as a row, hot leads ping Slack, and failures alert ops instead of disappearing.
 
 I built it for the brief stage of an AI creative pipeline: the 30-minute brief, then Midjourney/Kling generation. It ran end to end on n8n 2.47.3 (self-hosted, `npx n8n`) with a local LLM. All the outputs below come from those runs.
@@ -68,6 +70,8 @@ mkdir n8n-app && cd n8n-app && npm init -y && npm i n8n && cd ..
 # 3. send the sample briefs
 ./scripts.sh demo
 ```
+
+If the first requests return HTTP 404, the webhook isn't registered yet. Wait a few seconds and run `./scripts.sh demo` again.
 
 Or import `workflow/creative-brief-intake.json` from the n8n editor (Workflows → Import from file). Endpoints, model, schemas and the hot-lead threshold all live in one `CONFIG` block at the top of the **Normalize & validate** node. `workflow/build_workflow.py` generates the JSON, so changes can be reviewed as code.
 
